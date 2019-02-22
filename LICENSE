@@ -1,6 +1,10 @@
 MIT License
 
-Copyright (c) 2018 Yota Toyama
+Copyright for portions of project Foo are held by Yota Toyama, 2018 as 
+part of project https://github.com/raviqqe/gherkin2markdown.
+
+All other copyright for project https://github.com/martinroddam/gherkin2markdown 
+are held by Martin Roddam, 2019.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

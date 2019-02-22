@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	messages "github.com/cucumber/cucumber-messages-go"
@@ -22,6 +24,10 @@ func (r renderer) Render(d *messages.GherkinDocument) string {
 }
 
 func (r renderer) renderFeature(f *messages.Feature) {
+	if f == nil {
+		return
+	}
+
 	r.writeLine("# " + f.Name)
 	r.writeDescription(f.Description)
 
@@ -64,9 +70,42 @@ func (r renderer) renderSteps(ss []*messages.Step) {
 }
 
 func (r renderer) renderDocString(d *messages.DocString) {
-	r.writeLine("```")
+	if strings.Contains(d.Content, "`") {
+		backTicksLength := maxRepeatingBackticks(d.Content)
+		if backTicksLength >= 3 {
+			r.writeLine(genRepeatingChars("`", backTicksLength+1) + d.ContentType)
+			r.writeLine(d.Content)
+			r.writeLine(genRepeatingChars("`", backTicksLength+1))
+		}
+		return
+	}
+	r.writeLine("```" + d.ContentType)
 	r.writeLine(d.Content)
 	r.writeLine("```")
+}
+
+func maxRepeatingBackticks(str string) int {
+	var count, maxCount int
+	for i := 0; i < len(str); i++ {
+		if str[i] == '`' {
+			count++
+			if count > maxCount {
+				maxCount = count
+			}
+		} else {
+			count = 0
+		}
+	}
+
+	return maxCount
+}
+
+func genRepeatingChars(char string, length int) string {
+	var genString string
+	for i := 0; i < length; i++ {
+		genString += char
+	}
+	return genString
 }
 
 func (r renderer) renderStep(s *messages.Step, last bool) {
@@ -74,7 +113,13 @@ func (r renderer) renderStep(s *messages.Step, last bool) {
 		s.Text += "."
 	}
 
-	r.writeLine("_" + strings.TrimSpace(s.Keyword) + "_ " + s.Text)
+	backtickParams := func(s string) string {
+		re := regexp.MustCompile(`(?i)(<\s*[^>]*>(.*?))`)
+		new := re.ReplaceAllString(s, "`$1`")
+		return new
+	}
+
+	r.writeLine("_" + strings.TrimSpace(s.Keyword) + "_ " + backtickParams(s.Text))
 
 	if s.Argument != nil {
 		r.writeLine("")
@@ -82,9 +127,43 @@ func (r renderer) renderStep(s *messages.Step, last bool) {
 		switch x := s.Argument.(type) {
 		case *messages.Step_DocString:
 			r.renderDocString(x.DocString)
+		case *messages.Step_DataTable:
+			r.renderDataTable(x.DataTable)
 		default:
-			panic("unreachable")
+			panic(fmt.Sprintf("unreachable, type: %v", x))
 		}
+	}
+}
+
+func (r renderer) renderDataTable(dt *messages.DataTable) {
+
+	headerRow := dt.GetRows()[0]
+
+	ws := make([]int, len(headerRow.Cells))
+
+	rows := dt.GetRows()
+	rows = append(rows[:0], rows[1:]...)
+
+	for _, r := range append([]*messages.TableRow{headerRow}, rows...) {
+		for i, c := range r.Cells {
+			if w := len(c.Value); w > ws[i] {
+				ws[i] = w
+			}
+		}
+	}
+
+	r.renderCells(headerRow.Cells, ws)
+
+	s := "|"
+
+	for _, w := range ws {
+		s += strings.Repeat("-", w+2) + "|"
+	}
+
+	r.writeLine(s)
+
+	for _, t := range rows {
+		r.renderCells(t.Cells, ws)
 	}
 }
 
