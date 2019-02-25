@@ -1,8 +1,7 @@
-@feature_tag1 @feature_tag2
-  @feature_tag3
+@somefeature
 Feature: Minimal Scenario Outline
 
-  @scenario_tag1 @scenario_tag2
+  @scenario_tag1 @exclusion_tag1
     @scenario_tag3
   Scenario: minimalistic
       Given the minimalism

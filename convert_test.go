@@ -16,7 +16,7 @@ func TestConvertFile(t *testing.T) {
 	_, err = f.Write([]byte("Feature: Foo"))
 	assert.Nil(t, err)
 
-	assert.Nil(t, convertFile(f.Name(), ioutil.Discard))
+	assert.Nil(t, convertFile(f.Name(), []string{}, ioutil.Discard))
 }
 
 func TestConvertFileError(t *testing.T) {
@@ -27,7 +27,7 @@ func TestConvertFileError(t *testing.T) {
 	_, err = f.Write([]byte("Feature"))
 	assert.Nil(t, err)
 
-	assert.NotNil(t, convertFile(f.Name(), ioutil.Discard))
+	assert.NotNil(t, convertFile(f.Name(), []string{}, ioutil.Discard))
 }
 
 func TestConvertFilesWithNonReadableSourceDir(t *testing.T) {
@@ -35,5 +35,5 @@ func TestConvertFilesWithNonReadableSourceDir(t *testing.T) {
 	assert.Nil(t, err)
 	defer os.RemoveAll(d)
 
-	assert.NotNil(t, convertFiles("foo", d))
+	assert.NotNil(t, convertFiles("foo", d, []string{}))
 }

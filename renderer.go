@@ -11,10 +11,11 @@ import (
 
 type renderer struct {
 	*strings.Builder
+	ignoreTags []string
 }
 
-func newRenderer() renderer {
-	return renderer{&strings.Builder{}}
+func newRenderer(ignoreTags []string) renderer {
+	return renderer{&strings.Builder{}, ignoreTags}
 }
 
 func (r renderer) Render(d *messages.GherkinDocument) string {
@@ -27,22 +28,39 @@ func (r renderer) renderFeature(f *messages.Feature) {
 	if f == nil {
 		return
 	}
+	if r.matchesIgnoreTags(f.Tags) {
+		return
+	}
 
 	r.writeLine("# " + f.Name)
 	r.writeDescription(f.Description)
 
 	for _, x := range f.Children {
-		r.writeLine("")
 
 		switch x := x.Value.(type) {
 		case *messages.FeatureChild_Background:
+			r.writeLine("")
 			r.renderBackground(x.Background)
 		case *messages.FeatureChild_Scenario:
-			r.renderScenario(x.Scenario)
+			if !r.matchesIgnoreTags(x.Scenario.Tags) {
+				r.writeLine("")
+				r.renderScenario(x.Scenario)
+			}
 		default:
 			panic("unreachable")
 		}
 	}
+}
+
+func (r renderer) matchesIgnoreTags(tags []*messages.Tag) bool {
+	for _, tag := range tags {
+		for _, ignoreTag := range r.ignoreTags {
+			if tag.Name == ignoreTag {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (r renderer) renderBackground(b *messages.Background) {
