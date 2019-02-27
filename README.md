@@ -11,13 +11,19 @@ go get -u github.com/martinroddam/gherkin2markdown
 ## Usage
 
 ```
-gherkin2markdown <file>
+gherkin2markdown <file> [--ignoretags=<tags>]
 ```
 
 or
 
 ```
-gherkin2markdown <srcdir> <destdir>
+gherkin2markdown <srcdir> <destdir> [--ignoretags=<tags>]
+```
+
+To suppress outputting Features or Scenarios with a particular tag, or tags, use the `--ignoretags` option and provide a comma separated list of tags, e.g.:
+
+```
+gherkin2markdown myfile.feature --ignoretags=@wip,@experimental
 ```
 
 ## Example
@@ -76,7 +82,7 @@ print(<x> + <y>)
 
 _When_ I successfully run `python3 main.py`
 
-_Then_ the stdout should contain exactly "<z>".
+_Then_ the stdout should contain exactly "`<z>`".
 
 ### Examples
 
