@@ -13,11 +13,12 @@ func TestCommand(t *testing.T) {
 	f, err := ioutil.TempFile("", "")
 	assert.Nil(t, err)
 
-	f.WriteString("Feature: Foo")
+	_, err = f.WriteString("Feature: Foo")
+	assert.NoError(t, err)
 
 	assert.Nil(t, command([]string{f.Name()}, ioutil.Discard))
 
-	os.Remove(f.Name())
+	assert.NoError(t, os.Remove(f.Name()))
 }
 
 func TestCommandWithNonExistentFile(t *testing.T) {
@@ -43,5 +44,5 @@ func TestCommandWithDirectory(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "# Foo\n", string(bs))
 
-	os.RemoveAll(r)
+	assert.NoError(t, os.RemoveAll(r))
 }

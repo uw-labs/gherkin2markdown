@@ -1,4 +1,4 @@
-package main
+package g2md
 
 import (
 	"fmt"
@@ -6,42 +6,69 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/cucumber/gherkin-go"
 )
 
 const featureFileExtension = ".feature"
 
-func convertFile(s string, ignoreTags []string, w io.Writer) error {
-	f, err := os.Open(s)
+// Convert reads data from the provided reader, converts it to markdown and returns the result as a string.
+func Convert(r io.Reader, ignoreTags ...string) (string, error) {
+	d, err := gherkin.ParseGherkinDocument(r)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	d, err := gherkin.ParseGherkinDocument(f)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = fmt.Fprint(w, newRenderer(ignoreTags).Render(d))
-	return err
+	return newRenderer(ignoreTags).Render(d), nil
 }
 
-func convertFiles(s, d string, ignoreTags []string) error {
-	ps := []string{}
+// ConvertFileToString loads a file, converts it to markdown and returns the result as a string.
+func ConvertFileToString(fileName string, ignoreTags ...string) (string, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
 
-	err := filepath.Walk(s, func(p string, i os.FileInfo, err error) error {
+	return Convert(f, ignoreTags...)
+}
+
+// ConvertFile loads a source file, converts it to markdown and writes it to the given destination.
+func ConvertFile(sourceName, destName string, ignoreTags ...string) error {
+	data, err := ConvertFileToString(sourceName, ignoreTags...)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.OpenFile(destName, os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(out, data)
+	if err != nil {
+		_ = out.Close()
+		return err
+	}
+
+	return out.Close()
+}
+
+// ConvertFiles reads all gherkin files in the source directory, converts them to markdown
+// and writes the result to the target directory.
+func ConvertFiles(sourceDir, destDir string, ignoreTags ...string) error {
+	var sources []string
+
+	err := filepath.Walk(sourceDir, func(p string, i os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !i.IsDir() && filepath.Ext(p) == featureFileExtension {
-			ps = append(ps, p)
+			sources = append(sources, p)
 		}
-
 		return nil
 	})
 
@@ -49,52 +76,30 @@ func convertFiles(s, d string, ignoreTags []string) error {
 		return err
 	}
 
-	w := sync.WaitGroup{}
-	es := make(chan error, len(ps))
+	var eg errgroup.Group
 
-	for _, p := range ps {
-		w.Add(1)
-
-		go func(p string) {
-			defer w.Done()
-
-			f, err := openDestFile(p, s, d)
-
-			if err != nil {
-				es <- err
-				return
-			}
-
-			err = convertFile(p, ignoreTags, f)
-
-			if err != nil {
-				es <- err
-				return
-			}
-		}(p)
+	for _, source := range sources {
+		eg.Go(newConvertJob(source, sourceDir, destDir, ignoreTags))
 	}
 
-	w.Wait()
-
-	if len(es) != 0 {
-		return <-es
-	}
-
-	return nil
+	return eg.Wait()
 }
 
-func openDestFile(p, s, d string) (*os.File, error) {
-	p, err := filepath.Rel(s, p)
+func newConvertJob(source, sourceDir, destDir string, ignoreTags []string) func() error {
+	return func() error {
+		dest, err := filepath.Rel(sourceDir, source)
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return nil, err
+		dest = strings.TrimSuffix(filepath.Join(destDir, dest), featureFileExtension) + ".md"
+		if err = os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+			return err
+		}
+
+		if err = ConvertFile(source, dest, ignoreTags...); err != nil {
+			return err
+		}
+		return nil
 	}
-
-	p = strings.TrimSuffix(filepath.Join(d, p), featureFileExtension) + ".md"
-
-	if err := os.MkdirAll(filepath.Dir(p), 0700); err != nil {
-		return nil, err
-	}
-
-	return os.OpenFile(p, os.O_CREATE|os.O_WRONLY, 0600)
 }

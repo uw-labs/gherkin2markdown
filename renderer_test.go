@@ -1,4 +1,4 @@
-package main
+package g2md
 
 import (
 	"flag"
@@ -166,22 +166,21 @@ func TestAll(t *testing.T) {
 			mdFilePath := filepath.Join(testDataDir, test.mdFile)
 
 			inputGherkin, err := ioutil.ReadFile(gherkinFilePath)
-			require.NoErrorf(t, err, "Error opening gherkin file %s", gherkinFilePath)
+			require.NoErrorf(tr, err, "Error opening gherkin file %s", gherkinFilePath)
 
 			parsedGherkin, err := gherkin.ParseGherkinDocument(strings.NewReader(string(inputGherkin)))
-			require.NoErrorf(t, err, "Failed to parse gherkin document.")
+			require.NoErrorf(tr, err, "Failed to parse gherkin document.")
 
 			outputMarkdown := newRenderer([]string{test.excludeTags}).Render(parsedGherkin)
 
 			if *update {
-				ioutil.WriteFile(mdFilePath, []byte(outputMarkdown), 0644)
+				assert.NoError(tr, ioutil.WriteFile(mdFilePath, []byte(outputMarkdown), 0644))
 			}
 
 			expectedMarkdown, err := ioutil.ReadFile(mdFilePath)
-			require.NoErrorf(t, err, "Error opening markdown file %s", mdFilePath)
+			require.NoErrorf(tr, err, "Error opening markdown file %s", mdFilePath)
 
-			assert.Equal(t, string(expectedMarkdown), outputMarkdown)
-
+			assert.Equal(tr, string(expectedMarkdown), outputMarkdown)
 		})
 	}
 

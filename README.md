@@ -1,29 +1,29 @@
 # gherkin2markdown
 
-A command to convert Gherkin files into Markdown.
+A go library and a command line utility to convert Gherkin files into Markdown.
 
 ## Installation
 
 ```
-go get -u github.com/martinroddam/gherkin2markdown
+go get -u github.com/uw-labs/gherkin2markdown/cmd/g2md
 ```
 
 ## Usage
 
 ```
-gherkin2markdown <file> [--ignoretags=<tags>]
+g2md <file> [--ignoretags=<tags>]
 ```
 
 or
 
 ```
-gherkin2markdown <srcdir> <destdir> [--ignoretags=<tags>]
+g2md <srcdir> <destdir> [--ignoretags=<tags>]
 ```
 
 To suppress outputting Features or Scenarios with a particular tag, or tags, use the `--ignoretags` option and provide a comma separated list of tags, e.g.:
 
 ```
-gherkin2markdown myfile.feature --ignoretags=@wip,@experimental
+g2md myfile.feature --ignoretags=@wip,@experimental
 ```
 
 ## Example
@@ -53,7 +53,7 @@ Feature: Python
       | 4 | 5 | 9 |
 ```
 
-When I successfully run `gherkin2markdown math.feature`
+When I successfully run `g2md math.feature`
 
 Then the stdout should contain exactly:
 

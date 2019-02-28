@@ -1,11 +1,11 @@
-package main
+package g2md
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
-	messages "github.com/cucumber/cucumber-messages-go"
+	messages "github.com/cucumber/cucumber-messages-go/v2"
 	"github.com/willf/pad/utf8"
 )
 
