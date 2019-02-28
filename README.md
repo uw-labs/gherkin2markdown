@@ -1,4 +1,4 @@
-# gherkin2markdown
+# gherkin2markdown [![CircleCI](https://circleci.com/gh/uw-labs/gherkin2markdown.svg?style=svg)](https://circleci.com/gh/uw-labs/gherkin2markdown)
 
 A go library and a command line utility to convert Gherkin files into Markdown.
 
