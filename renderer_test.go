@@ -69,6 +69,12 @@ func TestAll(t *testing.T) {
 			mdFile:      "example_tokens_everywhere.md",
 		},
 		{
+			name:        "No text in background",
+			excludeTags: "",
+			gherkinFile: "no_text_background.feature",
+			mdFile:      "no_text_background.md",
+		},
+		{
 			name:        "Incomplete background 1",
 			excludeTags: "",
 			gherkinFile: "incomplete_background.feature",

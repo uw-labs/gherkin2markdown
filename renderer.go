@@ -64,7 +64,11 @@ func (r renderer) matchesIgnoreTags(tags []*messages.Tag) bool {
 }
 
 func (r renderer) renderBackground(b *messages.Background) {
-	r.writeLine("## Background (" + b.Name + ")")
+	if len(strings.TrimSpace(b.Name)) == 0 {
+		r.writeLine("## Background")
+	} else {
+		r.writeLine("## Background (" + b.Name + ")")
+	}
 	r.writeDescription(b.Description)
 	r.renderSteps(b.Steps)
 }
